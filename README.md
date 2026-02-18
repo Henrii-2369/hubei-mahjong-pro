@@ -13,20 +13,6 @@
 
 本项目是一个纯前端 Web 应用 (Single Page Application)。
 
-### 1. 部署 (选择一种方式)
-
-#### 方式 A: Vercel (推荐)
-1. Fork 本仓库到你的 GitHub。
-2. 登录 [Vercel](https://vercel.com)。
-3. 导入项目并直接点击 Deploy (无需配置环境变量)。
-
-### 2. 在 iPhone 上安装
-1. 打开 Safari 浏览器。
-2. 访问你部署好的网址。
-3. 点击底部中间的 **分享按钮** (Share Icon)。
-4. 点击 **"添加到主屏幕" (Add to Home Screen)**。
-5. 现在你可以离线使用计算器了。
-
 ## 🛠️ 本地开发
 
 1. 克隆项目
