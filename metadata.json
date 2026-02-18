@@ -1,0 +1,5 @@
+{
+  "name": "湖北麻将计算器",
+  "description": "专为湖北麻将（红中癞子杠）设计的牌效分析工具，帮助你计算最佳出牌策略和进张概率。",
+  "requestFramePermissions": []
+}
