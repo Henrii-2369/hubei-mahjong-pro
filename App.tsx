@@ -203,11 +203,27 @@ const App: React.FC = () => {
     );
   };
 
+  // Window scroll reset for iOS keyboard
+  useEffect(() => {
+    const handleBlur = () => {
+      // Small timeout to allow keyboard to close
+      setTimeout(() => {
+        window.scrollTo(0, 0);
+      }, 100);
+    };
+
+    // Attach to all inputs dynamically or just rely on global window/document events if possible?
+    // React's onBlur on inputs is safer. We will add specific handlers in components.
+    // But for global safety, we can listener to focusout?
+    document.addEventListener('focusout', handleBlur);
+    return () => document.removeEventListener('focusout', handleBlur);
+  }, []);
+
   return (
-    <div className="flex flex-col h-[100dvh] w-full bg-[#121212] text-white font-sans overflow-hidden">
+    <div className="flex flex-col fixed inset-0 w-full bg-[#121212] text-white font-sans overflow-hidden">
 
       {/* 1. Header */}
-      <header className="flex-none h-12 flex items-center justify-between px-4 bg-[#0a1f12] border-b border-[#1f402a] z-20">
+      <header className="flex-none pt-[env(safe-area-inset-top)] h-[calc(3rem+env(safe-area-inset-top))] flex items-center justify-between px-4 bg-[#0a1f12] border-b border-[#1f402a] z-20 transition-all">
         <div className="flex items-center gap-2">
           <span className="text-lg">🀄️</span>
           <h1 className="text-sm font-bold tracking-wide">个板麻将助手Pro</h1>
