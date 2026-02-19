@@ -48,12 +48,41 @@ const calculateShanten = (counts: number[], wildcards: number): number => {
   for (const eye of VALID_EYES) {
     if (counts[eye] >= 2) {
       counts[eye] -= 2;
+      // Eye Completed: hasEye=true
       minShanten = Math.min(minShanten, calculateSubShanten(counts, wildcards, true));
       counts[eye] += 2;
-    } else if (counts[eye] === 1 && wildcards >= 1) {
-      counts[eye] -= 1;
-      minShanten = Math.min(minShanten, calculateSubShanten(counts, wildcards - 1, true));
-      counts[eye] += 1;
+    } else if (counts[eye] === 1) {
+      // Eye Partial (Tanki Wait): We have 1, need 1 more.
+      // Treat this single as a Partial Pair. 
+      // We recurse with hasEye=false (because eye is not complete), 
+      // but we manually seed p=1 to represent the partial eye.
+      // Note: We use wildcards if available to complete it? 
+      // If wildcards >= 1, the original logic handled it:
+      // } else if (counts[eye] === 1 && wildcards >= 1) { ... hasEye=true }
+      // But if wildcards == 0, we can still say it's a Partial Eye (waiting for match).
+
+      if (wildcards >= 1) {
+        counts[eye] -= 1;
+        minShanten = Math.min(minShanten, calculateSubShanten(counts, wildcards - 1, true));
+        counts[eye] += 1;
+      } else {
+        // No wildcard. Use single as Partial Eye.
+        // Effectively: counts[eye]-- (remove from general pool), search(..., p=1).
+        counts[eye] -= 1;
+        // Easiest is to modify calculateSubShanten to take initial P? 
+        // Or just realize calculateSubShanten(counts, w, false) -> 8 - 2G - P.
+        // If we remove the single eye, run search(..., false), we get 8 - 2G - P_rest.
+        // Then we add back our Partial Eye (P=1).
+        // So result = 8 - 2G - (P_rest + 1) = (8 - 2G - P_rest) - 1.
+        // So result = calculateSubShanten(counts, wildcards, false) - 1.
+        // FIX: If calculateSubShanten returns 0 (4 sets), result becomes -1 (Hu).
+        // BUT a Single Eye means we are missing the second half of the pair.
+        // So we are TENPAI (0), not HU (-1).
+        // Therefore, we must clamp the result to at least 0.
+        const subShanten = calculateSubShanten(counts, wildcards, false) - 1;
+        minShanten = Math.min(minShanten, Math.max(0, subShanten));
+        counts[eye] += 1;
+      }
     } else if (wildcards >= 2) {
       minShanten = Math.min(minShanten, calculateSubShanten(counts, wildcards - 2, true));
     }
@@ -62,7 +91,18 @@ const calculateShanten = (counts: number[], wildcards: number): number => {
   // 2. Try WITHOUT a predetermined eye
   // Normalized formula: 8 - 2*G - P - (Eye? 1:0)
   // If we don't pick an eye now, we effectively say Eye=0.
-  minShanten = Math.min(minShanten, calculateSubShanten(counts, wildcards, false));
+  // CRITICAL FIX FOR HUBEI: 
+  // If we don't have a Valid Eye (Branch 2), we CANNOT be Tenpai (0) or Hu (-1),
+  // unless we are waiting for a Single Valid Eye (Tanki), which is handled in Branch 1 above.
+  // Therefore, the result of this branch must be capped at min 1 (1-Shanten).
+  // Exception: If logic failure in Branch 1? No, Branch 1 covers all valid eyes.
+  // So if we rely on Branch 2, it means we are building sets but ignoring the eye requirement.
+  // Thus we are "Waiting for Eye" -> 1-Shanten.
+
+  let noEyeShanten = calculateSubShanten(counts, wildcards, false);
+  if (noEyeShanten < 1) noEyeShanten = 1;
+
+  minShanten = Math.min(minShanten, noEyeShanten);
 
   return minShanten;
 };
@@ -302,6 +342,12 @@ export const analyzeHand = async (hand: Tile[], laiziTile: Tile | null): Promise
       const testHand = [...nextHandIndices, draw];
       const data = getCountsAndWildcards(testHand);
       const s = calculateShanten(data.c, data.w);
+
+      // Strict Improvement Check:
+      // We only care about draws that IMPROVE our shanten state.
+      // e.g. If initial is 0 (Tenpai), we only want -1 (Win).
+      // If initial is 1 (1-Shanten), we only want 0 (Tenpai).
+      if (s >= initialShanten) continue;
 
       if (s < minShantenAfterDraw) {
         minShantenAfterDraw = s;

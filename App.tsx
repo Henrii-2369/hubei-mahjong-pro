@@ -225,87 +225,89 @@ const App: React.FC = () => {
       {/* Main Content Area */}
       <div className="flex-1 overflow-y-auto overflow-x-hidden pb-20">
 
-        {activeTab === 'calc' ? (
-          <>
-            {/* 2. Top Input Grid */}
-            <div className={`
+        {/* Calculator View Wrapper */}
+        <div style={{ display: activeTab === 'calc' ? 'block' : 'none' }}>
+          {/* 2. Top Input Grid */}
+          <div className={`
               py-4 bg-[#080808] border-b border-white/5 transition-all duration-300
               ${isSelectingLaizi ? 'ring-2 ring-yellow-500/50 relative z-10' : ''}
             `}>
-              {isSelectingLaizi && (
-                <div className="absolute top-0 left-0 right-0 bg-yellow-600/90 text-white text-center text-xs py-1 font-bold z-20 animate-pulse">
-                  请点击上方牌张选择癞子
+            {isSelectingLaizi && (
+              <div className="absolute top-0 left-0 right-0 bg-yellow-600/90 text-white text-center text-xs py-1 font-bold z-20 animate-pulse">
+                请点击上方牌张选择癞子
+              </div>
+            )}
+            {renderInputRow('man')}
+            {renderInputRow('pin')}
+            {renderInputRow('sou')}
+            {renderInputRow('zihai')}
+          </div>
+
+          {/* 3. Status Bar & Hand Display */}
+          <div className="sticky top-0 z-10 bg-[#121212]/95 backdrop-blur shadow-xl border-b border-white/5">
+            {/* Laizi Controller */}
+            <div className="flex items-center justify-between px-4 py-2 border-b border-white/5">
+              <span className="text-xs text-gray-500 font-bold uppercase">手牌 ({hand.length}/14)</span>
+
+              <button
+                onClick={() => setIsSelectingLaizi(!isSelectingLaizi)}
+                className={`flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-bold transition-all ${isSelectingLaizi || !laizi
+                  ? 'bg-yellow-500 text-black border-yellow-400 animate-pulse'
+                  : 'bg-gray-800 text-gray-300 border-gray-600'
+                  }`}
+              >
+                {laizi ? (
+                  <>
+                    <span className="opacity-70">癞子:</span>
+                    <span className="text-sm">{laizi.suit === 'zihai' ? laizi.symbol : `${laizi.value}${laizi.suit === 'man' ? '万' : laizi.suit === 'pin' ? '筒' : '条'}`}</span>
+                  </>
+                ) : (
+                  "点击设置癞子"
+                )}
+              </button>
+            </div>
+
+            {/* Hand Tiles Horizontal Scroll */}
+            <div
+              ref={handContainerRef}
+              className="flex overflow-x-auto px-4 py-3 gap-1 no-scrollbar items-center bg-[#1a1a1a]"
+            >
+              {hand.length === 0 && (
+                <div className="w-full text-center text-xs text-gray-600 py-4 border-2 border-dashed border-gray-700 rounded">
+                  点击上方牌墙输入手牌
                 </div>
               )}
-              {renderInputRow('man')}
-              {renderInputRow('pin')}
-              {renderInputRow('sou')}
-              {renderInputRow('zihai')}
-            </div>
-
-            {/* 3. Status Bar & Hand Display */}
-            <div className="sticky top-0 z-10 bg-[#121212]/95 backdrop-blur shadow-xl border-b border-white/5">
-              {/* Laizi Controller */}
-              <div className="flex items-center justify-between px-4 py-2 border-b border-white/5">
-                <span className="text-xs text-gray-500 font-bold uppercase">手牌 ({hand.length}/14)</span>
-
-                <button
-                  onClick={() => setIsSelectingLaizi(!isSelectingLaizi)}
-                  className={`flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-bold transition-all ${isSelectingLaizi || !laizi
-                    ? 'bg-yellow-500 text-black border-yellow-400 animate-pulse'
-                    : 'bg-gray-800 text-gray-300 border-gray-600'
-                    }`}
-                >
-                  {laizi ? (
-                    <>
-                      <span className="opacity-70">癞子:</span>
-                      <span className="text-sm">{laizi.suit === 'zihai' ? laizi.symbol : `${laizi.value}${laizi.suit === 'man' ? '万' : laizi.suit === 'pin' ? '筒' : '条'}`}</span>
-                    </>
-                  ) : (
-                    "点击设置癞子"
+              {hand.map((tile, idx) => (
+                <div key={idx} className="flex-none animate-[scaleIn_0.1s_ease-out]">
+                  <TileComponent
+                    tile={tile}
+                    size="md"
+                    removable
+                    onClick={() => removeFromHand(idx)}
+                  />
+                  {laizi && tile.suit === laizi.suit && tile.value === laizi.value && (
+                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-yellow-500 rounded-full z-20 shadow border border-black/50" />
                   )}
-                </button>
-              </div>
-
-              {/* Hand Tiles Horizontal Scroll */}
-              <div
-                ref={handContainerRef}
-                className="flex overflow-x-auto px-4 py-3 gap-1 no-scrollbar items-center bg-[#1a1a1a]"
-              >
-                {hand.length === 0 && (
-                  <div className="w-full text-center text-xs text-gray-600 py-4 border-2 border-dashed border-gray-700 rounded">
-                    点击上方牌墙输入手牌
-                  </div>
-                )}
-                {hand.map((tile, idx) => (
-                  <div key={idx} className="flex-none animate-[scaleIn_0.1s_ease-out]">
-                    <TileComponent
-                      tile={tile}
-                      size="md"
-                      removable
-                      onClick={() => removeFromHand(idx)}
-                    />
-                    {laizi && tile.suit === laizi.suit && tile.value === laizi.value && (
-                      <div className="absolute -top-1 -right-1 w-3 h-3 bg-yellow-500 rounded-full z-20 shadow border border-black/50" />
-                    )}
-                  </div>
-                ))}
-              </div>
+                </div>
+              ))}
             </div>
+          </div>
 
-            {/* 4. Analysis Results (Scrollable Content) */}
-            <div className="pt-6 min-h-[300px]">
-              {renderAnalysisResults()}
-            </div>
+          {/* 4. Analysis Results (Scrollable Content) */}
+          <div className="pt-6 min-h-[300px]">
+            {renderAnalysisResults()}
+          </div>
 
-            {/* Footer Padding */}
-            <div className="h-10 text-center text-[10px] text-gray-700">
-              -- 个板麻将助手Pro --
-            </div>
-          </>
-        ) : (
+          {/* Footer Padding */}
+          <div className="h-10 text-center text-[10px] text-gray-700">
+            -- 个板麻将助手Pro --
+          </div>
+        </div>
+
+        {/* Scoreboard View Wrapper */}
+        <div style={{ display: activeTab === 'score' ? 'block' : 'none' }}>
           <Scoreboard />
-        )}
+        </div>
       </div>
 
       {/* Bottom Navigation */}
